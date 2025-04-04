@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import Response
 
 import matplotlib.pyplot as plt
@@ -10,12 +10,19 @@ import io
 app = FastAPI()
 
 
-@app.get("/")
-async def root():
+@app.get("/disparity")
+async def disparity(name: str):
+    try:
+        left = plt.imread(f"../images/{name}/left.png")
+        right = plt.imread(f"../images/{name}/right.png")
+    except FileNotFoundError:
+        raise HTTPException(status_code=422, detail="Image does not exist")
+
     # Disparity would contain the output of the stereo matching algorithm
     # Must be grayscale with dtype of uint8
-    disparity = (plt.imread("image.png") * 255).astype(np.uint8)[:, :, 0]
+    disparity = (np.concatenate((left, right)) * 255).astype(np.uint8)[:, :, 0]  # UPDATE
 
+    # Convert 2D to bytes of png
     imgByteArr = io.BytesIO()
     Image.fromarray(disparity, "L").save(imgByteArr, format="PNG")
     imgByteArr = imgByteArr.getvalue()
