@@ -28,9 +28,9 @@ void main() {
     vec3 diffuse = vec3(1.00, 0.80, 0.50);
     
     ambient = (0.1 * ambient + originalImage.xyz) / 1.1;
-    diffuse = (0.1 * diffuse + originalImage.xyz) / 1.1;
+    diffuse = 0.8 * (0.1 * diffuse + originalImage.xyz) / 1.1;
 
-    vec3 lightpos = vec3(iMouse.x, iMouse.y, 25.0);
+    vec3 lightpos = vec3(iMouse.x, iMouse.y, 70.0);
     vec3 dir = normalize(lightpos - vec3(gl_FragCoord.xy, 0.0));
 
     vec3 norm;
@@ -42,7 +42,7 @@ void main() {
 	
 	vec3 h = normalize(dir + eye);
 
-	vec3 cs = specular * pow(max(0.0, dot(h, norm)), 50.0); //specular color
+	vec3 cs = specular * pow(max(0.0, dot(h, norm)), 100.0); //specular color
 
     vec3 col = ambient + cd + cs;
     
@@ -104,7 +104,7 @@ async function main() {
     glContext.pixelStorei(glContext.UNPACK_FLIP_Y_WEBGL, true);
 
     const textureAssets = [
-        'assets/normal.png',
+        'assets/normal2.png',
         'assets/image.png',
     ];
 
