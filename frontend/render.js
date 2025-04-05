@@ -13,14 +13,26 @@ precision mediump float;
 uniform vec3 iResolution;
 uniform vec4 iMouse;
 
-uniform sampler2D normal;
+uniform sampler2D depth;
 uniform sampler2D image;
+
+/*mat3 sobelFilterX = mat3(
+    -1.0,  0.0,  1.0, 
+    -2.0,  0.0,  2.0, 
+    -1.0,  0.0,  1.0
+);
+
+mat3 sobelFilterY = mat3(
+    -1.0,  -2.0,  -1.0, 
+    0.0,  0.0,  0.0, 
+    1.0,  2.0,  1.0
+);*/
 
 void main() {
 
     vec2 uv = gl_FragCoord.xy / iResolution.xy; // Normalized pixel coordinates
 
-    vec4 normalMap = texture2D(normal, uv);
+    vec4 depthMap = texture2D(depth, uv);
     vec4 originalImage = texture2D(image, uv);
 
     vec3 specular = vec3(1.0, 1.0, 0.9);
@@ -28,13 +40,97 @@ void main() {
     vec3 diffuse = vec3(1.00, 0.80, 0.50);
     
     ambient = (0.1 * ambient + originalImage.xyz) / 1.1;
-    diffuse = 0.8 * (0.1 * diffuse + originalImage.xyz) / 1.1;
+    diffuse = 0.8 * (0.1 * diffuse + originalImage.xyz) / 1.1; // added 0.8 in front to dim the color of the image so that effects of light are more pronounced
 
-    vec3 lightpos = vec3(iMouse.x, iMouse.y, 70.0);
+    vec3 lightpos = vec3(iMouse.x, iMouse.y, 70.0); //adjust this to change the size, closeness, of light
     vec3 dir = normalize(lightpos - vec3(gl_FragCoord.xy, 0.0));
 
-    vec3 norm;
-    norm = normalize(2.0 * normalMap.rgb - vec3(1.0));
+    ///////////////////////////////////////////////////////////
+
+    //computing the normal map
+
+    //first compute the gradient by convolving through with a sobel filter
+
+    //need to have boundary conditions to ensure not going out of bounds
+
+    float gradX = 0.0;
+    float gradY = 0.0;
+
+    if (gl_FragCoord.x > 0.0){
+
+        vec2 neighborFragment = vec2(gl_FragCoord.x - 1.0, gl_FragCoord.y);
+
+        gradX += -2.0 * texture2D(depth,  neighborFragment / iResolution.xy).r;
+        
+    }
+
+    if (gl_FragCoord.x + 1.0 < iResolution.x){
+
+        vec2 neighborFragment = vec2(gl_FragCoord.x + 1.0, gl_FragCoord.y);
+
+        gradX += 2.0 * texture2D(depth,  neighborFragment / iResolution.xy).r;
+
+    }
+
+    if (gl_FragCoord.y > 0.0){
+
+        vec2 neighborFragment = vec2(gl_FragCoord.x, gl_FragCoord.y - 1.0);
+
+        gradY += -2.0 * texture2D(depth,  neighborFragment / iResolution.xy).r;
+
+        if (gl_FragCoord.x > 0.0){
+
+            vec2 neighborFragment2 = vec2(gl_FragCoord.x - 1.0, neighborFragment.y);
+
+            float gradVal = -1.0 * texture2D(depth,  neighborFragment2 / iResolution.xy).r;
+
+            gradX += gradVal;
+            gradY += gradVal;
+            
+        }
+
+        if (gl_FragCoord.x + 1.0 < iResolution.x){
+
+            vec2 neighborFragment2 = vec2(gl_FragCoord.x + 1.0, neighborFragment.y);
+
+            gradX += 1.0 * texture2D(depth,  neighborFragment2 / iResolution.xy).r;
+            gradY += -1.0 * texture2D(depth,  neighborFragment2 / iResolution.xy).r;
+            
+        }
+    }
+
+    if (gl_FragCoord.y + 1.0 < iResolution.y){
+
+        vec2 neighborFragment = vec2(gl_FragCoord.x, gl_FragCoord.y + 1.0);
+
+        gradY += 2.0 * texture2D(depth,  neighborFragment / iResolution.xy).r;
+
+        if (gl_FragCoord.x > 0.0){
+
+            vec2 neighborFragment2 = vec2(gl_FragCoord.x - 1.0, neighborFragment.y);
+
+            gradX += -1.0 * texture2D(depth,  neighborFragment2 / iResolution.xy).r;
+            gradY += 1.0 * texture2D(depth,  neighborFragment2 / iResolution.xy).r;
+            
+        }
+
+        if (gl_FragCoord.x + 1.0 < iResolution.x){
+
+            vec2 neighborFragment2 = vec2(gl_FragCoord.x + 1.0, neighborFragment.y);
+
+            float gradVal = 1.0 * texture2D(depth,  neighborFragment2 / iResolution.xy).r;
+
+            gradX += gradVal;
+            gradY += gradVal;
+            
+        }
+    }
+
+    vec3 norm = normalize(vec3(-1.0 * gradX, -1.0 * gradY, 0.15)); //adjust z value here to change depth effect, this is what I thought looked best but might want to experiment more
+
+    /////////////////////////////////////////////////////////////
+
+    //vec3 norm = normalize(2.0 * normal - vec3(1.0));
 
     vec3 eye = vec3(0.0, 0.0, 1.0);
         
@@ -104,8 +200,8 @@ async function main() {
     glContext.pixelStorei(glContext.UNPACK_FLIP_Y_WEBGL, true);
 
     const textureAssets = [
-        'assets/normal2.png',
-        'assets/image.png',
+        'assets/rexDepth2.png',
+        'assets/rexSmaller.png',
     ];
 
     const textures = await Promise.all(textureAssets.map(textureLoader));
@@ -118,7 +214,7 @@ async function main() {
     //setup texture attributes
     //right now just passing in normal and image but later we can get this setup for multiple passes
 
-    const iChannel0Loc = glContext.getUniformLocation(glProgram, "normal");
+    const iChannel0Loc = glContext.getUniformLocation(glProgram, "depth");
     glContext.uniform1i(iChannel0Loc, 0);
 
     const iChannel1Loc = glContext.getUniformLocation(glProgram, "image");
