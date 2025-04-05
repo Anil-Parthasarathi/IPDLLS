@@ -10,6 +10,9 @@ const vertexShaderCode = `
 const finalFragmentShaderCode = `
 precision mediump float;
 
+uniform int renderStyle;
+uniform float zFactor;
+
 uniform vec3 iResolution;
 uniform vec4 iMouse;
 
@@ -35,6 +38,11 @@ void main() {
     vec4 depthMap = texture2D(depth, uv);
     vec4 originalImage = texture2D(image, uv);
 
+    if (renderStyle == 4){
+        gl_FragColor = depthMap;
+        return;
+    }
+
     vec3 specular = vec3(1.0, 1.0, 0.9);
     vec3 ambient = vec3(0.10, 0.10, 0.60);
     vec3 diffuse = vec3(1.00, 0.80, 0.50);
@@ -56,69 +64,71 @@ void main() {
     float gradX = 0.0;
     float gradY = 0.0;
 
-    if (gl_FragCoord.x > 0.0){
+    vec2 texel = 1.0 / iResolution.xy; 
 
-        vec2 neighborFragment = vec2(gl_FragCoord.x - 1.0, gl_FragCoord.y);
+    if (uv.x > 0.0){
 
-        gradX += -2.0 * texture2D(depth,  neighborFragment / iResolution.xy).r;
+        vec2 neighborFragment = vec2(uv.x - texel.x, uv.y);
+
+        gradX += -2.0 * texture2D(depth,  neighborFragment).r;
         
     }
 
-    if (gl_FragCoord.x + 1.0 < iResolution.x){
+    if (uv.x + texel.x < 1.0){
 
-        vec2 neighborFragment = vec2(gl_FragCoord.x + 1.0, gl_FragCoord.y);
+        vec2 neighborFragment = vec2(uv.x + texel.x, uv.y);
 
-        gradX += 2.0 * texture2D(depth,  neighborFragment / iResolution.xy).r;
+        gradX += 2.0 * texture2D(depth,  neighborFragment).r;
 
     }
 
-    if (gl_FragCoord.y > 0.0){
+    if (uv.y > 0.0){
 
-        vec2 neighborFragment = vec2(gl_FragCoord.x, gl_FragCoord.y - 1.0);
+        vec2 neighborFragment = vec2(uv.x, uv.y - texel.y);
 
-        gradY += -2.0 * texture2D(depth,  neighborFragment / iResolution.xy).r;
+        gradY += -2.0 * texture2D(depth,  neighborFragment).r;
 
-        if (gl_FragCoord.x > 0.0){
+        if (uv.x > 0.0){
 
-            vec2 neighborFragment2 = vec2(gl_FragCoord.x - 1.0, neighborFragment.y);
+            vec2 neighborFragment2 = vec2(uv.x - texel.x, neighborFragment.y);
 
-            float gradVal = -1.0 * texture2D(depth,  neighborFragment2 / iResolution.xy).r;
+            float gradVal = -1.0 * texture2D(depth,  neighborFragment2).r;
 
             gradX += gradVal;
             gradY += gradVal;
             
         }
 
-        if (gl_FragCoord.x + 1.0 < iResolution.x){
+        if (uv.x + texel.x < 1.0){
 
-            vec2 neighborFragment2 = vec2(gl_FragCoord.x + 1.0, neighborFragment.y);
+            vec2 neighborFragment2 = vec2(uv.x + texel.x, neighborFragment.y);
 
-            gradX += 1.0 * texture2D(depth,  neighborFragment2 / iResolution.xy).r;
-            gradY += -1.0 * texture2D(depth,  neighborFragment2 / iResolution.xy).r;
+            gradX += 1.0 * texture2D(depth,  neighborFragment2).r;
+            gradY += -1.0 * texture2D(depth,  neighborFragment2).r;
             
         }
     }
 
-    if (gl_FragCoord.y + 1.0 < iResolution.y){
+    if (uv.y + texel.y < 1.0){
 
-        vec2 neighborFragment = vec2(gl_FragCoord.x, gl_FragCoord.y + 1.0);
+        vec2 neighborFragment = vec2(uv.x, uv.y + texel.y);
 
-        gradY += 2.0 * texture2D(depth,  neighborFragment / iResolution.xy).r;
+        gradY += 2.0 * texture2D(depth, neighborFragment).r;
 
-        if (gl_FragCoord.x > 0.0){
+        if (uv.x > 0.0){
 
-            vec2 neighborFragment2 = vec2(gl_FragCoord.x - 1.0, neighborFragment.y);
+            vec2 neighborFragment2 = vec2(uv.x - texel.x, neighborFragment.y);
 
-            gradX += -1.0 * texture2D(depth,  neighborFragment2 / iResolution.xy).r;
-            gradY += 1.0 * texture2D(depth,  neighborFragment2 / iResolution.xy).r;
+            gradX += -1.0 * texture2D(depth,  neighborFragment2).r;
+            gradY += 1.0 * texture2D(depth,  neighborFragment2).r;
             
         }
 
-        if (gl_FragCoord.x + 1.0 < iResolution.x){
+        if (uv.x + texel.x < 1.0){
 
-            vec2 neighborFragment2 = vec2(gl_FragCoord.x + 1.0, neighborFragment.y);
+            vec2 neighborFragment2 = vec2(uv.x + texel.x, neighborFragment.y);
 
-            float gradVal = 1.0 * texture2D(depth,  neighborFragment2 / iResolution.xy).r;
+            float gradVal = 1.0 * texture2D(depth,  neighborFragment2).r;
 
             gradX += gradVal;
             gradY += gradVal;
@@ -126,13 +136,38 @@ void main() {
         }
     }
 
-    vec3 norm = normalize(vec3(-1.0 * gradX, -1.0 * gradY, 0.15)); //adjust z value here to change depth effect, this is what I thought looked best but might want to experiment more
+    vec3 norm = normalize(vec3(-1.0 * gradX, -1.0 * gradY, zFactor)); //adjust z value here to change depth effect, this is what I thought looked best but might want to experiment more
 
     /////////////////////////////////////////////////////////////
+
+    //if render style is 1 then we will just return the normal map
+
+    if (renderStyle == 1){
+        gl_FragColor = vec4(norm, 1.0);
+        return;
+    }
 
     //vec3 norm = normalize(2.0 * normal - vec3(1.0));
 
     vec3 eye = vec3(0.0, 0.0, 1.0);
+
+    if (renderStyle == 2){
+        //silhouette shader
+
+        float normEye = dot(norm, eye);
+
+        if (abs(normEye) < 0.3){
+
+		gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+
+        }
+        else{
+            gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+        }
+
+        return;
+
+    }
         
     vec3 cd = diffuse * max(0.0, dot(dir, norm)); //diffuse color
 	
@@ -141,6 +176,39 @@ void main() {
 	vec3 cs = specular * pow(max(0.0, dot(h, norm)), 100.0); //specular color
 
     vec3 col = ambient + cd + cs;
+
+    if (renderStyle == 3){
+        // cel shader
+
+        float normEye = dot(norm, eye);
+
+        if (abs(normEye) < 0.2){
+		    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+        }
+        else if (abs(normEye) < 0.3) {
+            gl_FragColor = vec4(col.x * 0.3, col.y *  0.2, col.z *  0.25, 1.0);
+        }
+        else if (abs(normEye) < 0.4) {
+            gl_FragColor = vec4(col.x * 0.5, col.y *  0.4, col.z *  0.45, 1.0);
+        }
+        else if (abs(normEye) < 0.7) {
+            gl_FragColor = vec4(col.x * 0.65, col.y *  0.55, col.z *  0.6, 1.0);
+        }
+        else if (abs(normEye) < 0.8) {
+            gl_FragColor = vec4(col.x * 0.8, col.y *  0.7, col.z *  0.75, 1.0);
+        }
+        else if (abs(normEye) < 0.9) {
+            gl_FragColor = vec4(col.x * 0.9, col.y *  0.85, col.z *  0.9, 1.0);
+        }
+        else if (abs(normEye) < 1.0) {
+            gl_FragColor = vec4(col.x * 0.95, col.y *  0.9, col.z *  0.95, 1.0);
+        }
+        else{
+            gl_FragColor = vec4(col.x, col.y, col.z, 1.0);
+        }
+        return;
+
+    }
     
     gl_FragColor = vec4(col, 1.0); // Output to screen
 }
@@ -153,6 +221,12 @@ var glProgram;
 var mousePos;
 var iResolutionAttribute;
 var iMouseAttribute;
+
+var renderStyle = 0;
+var renderStyleAttribute;
+
+var zFactor = 0.15;
+var zFactorAttribute;
 
 async function main() {
 
@@ -200,8 +274,8 @@ async function main() {
     glContext.pixelStorei(glContext.UNPACK_FLIP_Y_WEBGL, true);
 
     const textureAssets = [
-        'assets/rexDepth2.png',
-        'assets/rexSmaller.png',
+        'assets/gremlinDepth2.png',
+        'assets/gremlin.png',
     ];
 
     const textures = await Promise.all(textureAssets.map(textureLoader));
@@ -245,6 +319,9 @@ async function main() {
     iMouseAttribute = glContext.getUniformLocation(glProgram, 'iMouse');
     iResolutionAttribute = glContext.getUniformLocation(glProgram, 'iResolution');
 
+    renderStyleAttribute = glContext.getUniformLocation(glProgram, 'renderStyle');
+    zFactorAttribute = glContext.getUniformLocation(glProgram, 'zFactor');
+
     //set up the mouse and an event listener for it
     mousePos = { x: 0, y: 0 };
 
@@ -275,6 +352,9 @@ function render(){
     glContext.uniform4f(iMouseAttribute, mousePos.x, mousePos.y, 0.0, 0.0);
     glContext.uniform3f(iResolutionAttribute, canv.width, canv.height, 1.0);
 
+    glContext.uniform1i(renderStyleAttribute, renderStyle);
+    glContext.uniform1f(zFactorAttribute, zFactor);
+
     //draw!
     glContext.drawArrays(glContext.TRIANGLES, 0, 6);
     requestAnimationFrame(render);
@@ -304,6 +384,33 @@ async function textureLoader(url) {
         textureImage.src = url;
     });
 }
+
+async function setRenderStyle(style){
+    if (style == "0"){
+        renderStyle = 0;
+    }
+    else if (style == "1"){
+        renderStyle = 1;
+    }
+    else if (style == "2"){
+        renderStyle = 2;
+    }
+    else if (style == "3"){
+        renderStyle = 3;
+    }
+    else if (style == "4"){
+        renderStyle = 4;
+    }
+}
+window.setRenderStyle = setRenderStyle;
+
+export function handleZSliderChange(newZFactor) {
+    document.getElementById("sliderValue").textContent = newZFactor;
+    
+    zFactor = newZFactor;
+
+}
+window.handleZSliderChange = handleZSliderChange;
 
 
 main();
