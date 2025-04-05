@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import Response
+from fastapi.middleware.cors import CORSMiddleware
 
 import matplotlib.pyplot as plt
 from PIL import Image
@@ -8,6 +9,15 @@ import numpy as np
 import io
 
 app = FastAPI()
+
+origins = [
+    "http://localhost:5500",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+)
 
 
 @app.get("/disparity")
