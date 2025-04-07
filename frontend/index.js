@@ -1,5 +1,5 @@
 function addImages() {
-  const imageFiles = [
+  const imageDirs = [
     'art',
     'books',
     'computer',
@@ -13,23 +13,22 @@ function addImages() {
 
   const imageContainer = document.getElementsByTagName('fieldset')[0];
 
-  imageFiles.forEach((dirName) => {
+  imageDirs.forEach((imageDir) => {
     const left = document.createElement('img');
-    left.src = `../images/${dirName}/left.png`;
+    left.src = `../images/${imageDir}/left.png`;
     const right = document.createElement('img');
-    right.src = `../images/${dirName}/right.png`;
-
-    const imageDiv = document.createElement('div');
+    right.src = `../images/${imageDir}/right.png`;
 
     const imageInput = document.createElement('input');
     imageInput.type = 'radio';
-    imageInput.id = dirName;
+    imageInput.id = imageDir;
     imageInput.name = 'images';
 
     const imageLabel = document.createElement('label');
+    imageLabel.htmlFor = imageDir;
     imageLabel.append(left, right);
-    imageLabel.htmlFor = dirName;
 
+    const imageDiv = document.createElement('div');
     imageDiv.append(imageInput, imageLabel);
 
     imageContainer.append(imageDiv);
@@ -45,12 +44,12 @@ async function selectImage() {
   }
 
   const imageDir = selected.id;
-  console.log(imageDir);
 
   try {
     const response = await fetch(
       `http://127.0.0.1:8000/disparity?name=${imageDir}`
     );
+
     if (!response.ok) {
       alert('Nonvalid images.');
     }
@@ -66,4 +65,4 @@ async function selectImage() {
 }
 
 const form = document.getElementsByTagName('form')[0];
-form.addEventListener('submit', (event) => selectImage(event));
+form.addEventListener('submit', () => selectImage());
