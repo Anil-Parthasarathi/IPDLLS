@@ -1,8 +1,12 @@
+In placid depth, latent light sparkles
+
 Stack:  
--Python: backend  
+-Python: backend (matplotlib, numpy, fastapi)   
 -webgl: Final rendering  
 
 Building:  
 pip install fastapi
+pip install fastapi[standard]
 
-In placid depth, latent light sparkles
+fastapi dev main.py
+
