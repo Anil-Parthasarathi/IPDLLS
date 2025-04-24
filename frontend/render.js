@@ -8,10 +8,13 @@ const vertexShaderCode = `
 `;
 
 const finalFragmentShaderCode = `
+
 precision mediump float;
 
 uniform int renderStyle;
 uniform float zFactor;
+
+uniform float DEPTHFACTOR;
 
 uniform vec3 iResolution;
 uniform vec4 iMouse;
@@ -35,11 +38,11 @@ void main() {
 
     vec2 uv = gl_FragCoord.xy / iResolution.xy; // Normalized pixel coordinates
 
-    vec4 depthMap = texture2D(depth, uv);
+    vec4 disparityMap = texture2D(depth, uv);
     vec4 originalImage = texture2D(image, uv);
 
     if (renderStyle == 4){
-        gl_FragColor = depthMap;
+        gl_FragColor = disparityMap;
         return;
     }
 
@@ -70,7 +73,7 @@ void main() {
 
         vec2 neighborFragment = vec2(uv.x - texel.x, uv.y);
 
-        gradX += -2.0 * texture2D(depth,  neighborFragment).r;
+        gradX += -2.0 * (DEPTHFACTOR / max(texture2D(depth,  neighborFragment).r, 0.0001));
         
     }
 
@@ -78,7 +81,7 @@ void main() {
 
         vec2 neighborFragment = vec2(uv.x + texel.x, uv.y);
 
-        gradX += 2.0 * texture2D(depth,  neighborFragment).r;
+        gradX += 2.0 * (DEPTHFACTOR / max(texture2D(depth,  neighborFragment).r, 0.0001));
 
     }
 
@@ -86,7 +89,7 @@ void main() {
 
         vec2 neighborFragment = vec2(uv.x, uv.y - texel.y);
 
-        gradY += -2.0 * texture2D(depth,  neighborFragment).r;
+        gradY += -2.0 * (DEPTHFACTOR / max(texture2D(depth,  neighborFragment).r, 0.0001));
 
         if (uv.x > 0.0){
 
@@ -113,7 +116,7 @@ void main() {
 
         vec2 neighborFragment = vec2(uv.x, uv.y + texel.y);
 
-        gradY += 2.0 * texture2D(depth, neighborFragment).r;
+        gradY += 2.0 * (DEPTHFACTOR / max(texture2D(depth,  neighborFragment).r, 0.0001));
 
         if (uv.x > 0.0){
 
@@ -225,8 +228,10 @@ var iMouseAttribute;
 var renderStyle = 0;
 var renderStyleAttribute;
 
+var depthFactor = 598400.0;
 var zFactor = 0.15;
 var zFactorAttribute;
+var depthFactorAttribute;
 
 async function main() {
 
@@ -274,8 +279,8 @@ async function main() {
     glContext.pixelStorei(glContext.UNPACK_FLIP_Y_WEBGL, true);
 
     const textureAssets = [
-        'assets/gremlinDepth2.png',
-        'assets/gremlin.png',
+        'assets/disparitySculpt.png',
+        'assets/sculpt.png',
     ];
 
     const textures = await Promise.all(textureAssets.map(textureLoader));
@@ -320,6 +325,7 @@ async function main() {
     iResolutionAttribute = glContext.getUniformLocation(glProgram, 'iResolution');
 
     renderStyleAttribute = glContext.getUniformLocation(glProgram, 'renderStyle');
+    depthFactorAttribute = glContext.getUniformLocation(glProgram, 'DEPTHFACTOR');
     zFactorAttribute = glContext.getUniformLocation(glProgram, 'zFactor');
 
     //set up the mouse and an event listener for it
@@ -354,6 +360,7 @@ function render(){
 
     glContext.uniform1i(renderStyleAttribute, renderStyle);
     glContext.uniform1f(zFactorAttribute, zFactor);
+    glContext.uniform1f(depthFactorAttribute, depthFactor);
 
     //draw!
     glContext.drawArrays(glContext.TRIANGLES, 0, 6);
@@ -411,6 +418,14 @@ export function handleZSliderChange(newZFactor) {
 
 }
 window.handleZSliderChange = handleZSliderChange;
+
+export function handleDepthFactorChange(newDepthFactor) {
+    document.getElementById("depthSlider").textContent = newDepthFactor;
+    
+    depthFactor = newDepthFactor;
+
+}
+window.handleDepthFactorChange = handleDepthFactorChange;
 
 
 main();

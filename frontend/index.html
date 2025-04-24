@@ -64,7 +64,7 @@
           value="4"
           onclick="setRenderStyle('4')"
         />
-        Depth Map
+        Disparity Map
       </label>
       <label>
         <input
@@ -107,6 +107,20 @@
         oninput="handleZSliderChange(this.value)"
       />
       <span id="sliderValue">0.15</span>
+    </div>
+    <div>
+      <label for="depthSlider">"Depth Factor":</label>
+      <input
+        type="range"
+        id="sliderD"
+        name="sliderD"
+        min="1.0"
+        max="1000000.0"
+        step="5.0"
+        value="598400.0"
+        oninput="handleDepthFactorChange(this.value)"
+      />
+      <span id="depthSlider">598400.0</span>
     </div>
     <canvas id="renderCanvas" width="950" height="700"></canvas>
     <form id="image-selection" type="radio" onsubmit="return false">
