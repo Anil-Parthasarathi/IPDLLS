@@ -38,6 +38,7 @@ function addImages() {
   });
 
   selectImage(imageDirs[0]);
+  getDisparity();
 }
 
 document.body.onload = addImages();
@@ -55,23 +56,15 @@ async function getDisparity() {
   if (!selected) {
     return;
   }
-
+  
   const imageDir = selected.id;
 
-  try {
-    const response = await fetch(
-      `http://127.0.0.1:8000/disparity?name=${imageDir}`
-    );
+  textureAssets = [
+    `../images/${imageDir}/depth.png`,
+    `../images/${imageDir}/left.png`,
+  ]
 
-    if (!response.ok) {
-      alert('Nonvalid images.');
-    }
-
-    // Send disparity image to render pipeline
-    const image = await response.blob();
-  } catch (error) {
-    console.error(error);
-  }
+  window.updateTexture(`../images/${imageDir}/depth.png`, `../images/${imageDir}/left.png`)
 }
 
 const form = document.getElementsByTagName('form')[0];
