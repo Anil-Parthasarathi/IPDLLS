@@ -8,9 +8,14 @@ from skimage.filters import gaussian, sobel
 def imsaveWrapper(img, name):
     temp = np.copy(img) / max(img.max(), 1)
     if len(img.shape) == 2:
-        plt.imsave(f'./results/{name}.png', np.stack((temp, temp, temp), axis=2))
+        plt.imsave(f'{name}.png', np.stack((temp, temp, temp), axis=2))
     else:
-        plt.imsave(f'./results/{name}.png', temp)
+        plt.imsave(f'{name}.png', temp)
+
+def gaussianWrapper(path, sigma):
+    img = rgb2gray(plt.imread(path + '.png'))
+    img = gaussian(img, sigma)
+    plt.imsave(f'{path}.png', np.stack((img, img, img), axis=2))
 
 def rgb2gray(img):
     rgb = np.sum(img, axis=2) / 3
@@ -148,7 +153,6 @@ def dynamic(img1, img2, windowDim):
     for outerRow in range(HEIGHT // 1):
         DSI = np.ones((WIDTH, WIDTH)).astype(img1.dtype)
         DSI -= NCC(window1[outerRow][:, np.newaxis], window2[outerRow], (2, 3)).T
-        # print(DSI.max(), DSI.min())
 
         # Format dynamic programming matrix
         dr = (0, min(63, WIDTH - 1)) # inclusive
@@ -157,15 +161,13 @@ def dynamic(img1, img2, windowDim):
         # diagIndices = ((diagIndices >= dr[0]) & (diagIndices <= dr[1]))[:DSI.shape[0]]
         # DSI = np.concatenate((DSI, np.zeros((DSI.shape[0], dr[1] - dr[0]))), axis=1)[diagIndices]
         # DSI = DSI.reshape(WIDTH, dr[1] - dr[0] + 1).T
-        # imsaveWrapper(DSI, 'dsi_post')
 
         # Fill in matrix column by column
-        occlusionConstant = .25
-        # print(occlusionConstant, DSI)
+        occlusionConstant = 0.5
 
         # First row
         for col in range(1, dr[1] - dr[0] + 1):
-            DSI[0, col] = occlusionConstant * col #min(DSI[0, col], DSI[0, col - 1] + occlusionConstant)
+            DSI[0, col] = occlusionConstant * col
 
         # Remaining rows
         baseCol = 1
@@ -186,8 +188,6 @@ def dynamic(img1, img2, windowDim):
                 DSI[row, baseCol + col] = min(dissimilarity, occlusionLeft, occlusionRight) 
 
             baseCol += 1
-
-        # imsaveWrapper(DSI, 'mid')
 
         # Backtrace
         col = DSI.shape[1] - 1
@@ -223,14 +223,12 @@ def dynamic(img1, img2, windowDim):
         prev = depth[:, col - 1]
         curr = depth[:, col]
 
-        # if (np.any(leftOccluded[:, col])):
         curr[leftOccluded[:, col]] = np.maximum(prev[leftOccluded[:, col]], curr[leftOccluded[:, col]])
 
     for col in range(WIDTH - 2, -1, -1):
         prev = depth[:, col + 1]
         curr = depth[:, col]
 
-        # if (np.any(rightOccluded[:, col])):
         curr[rightOccluded[:, col]] = np.maximum(prev[rightOccluded[:, col]], curr[rightOccluded[:, col]])
 
         # # Initial row and col
@@ -272,52 +270,25 @@ def dynamic(img1, img2, windowDim):
 
         # depth[outerRow, 0] = row
         
-
-    # print(DSI.max(), min(np.inf, 39999999))
-    # imsaveWrapper(DSI, 'DSI')
-    imsaveWrapper(depth, 'depth')
-    # DSI = DSI.reshape(2, WIDTH//2)
-    # DSI = DSI.diagonal(disparity_range[1])
-    # print(DSI.shape)
-
-# A = np.array([
-#     [0,0,0,0],
-#     [0,4,0,0],
-#     [0,0,0,1]
-# ])
-# B = np.array([
-#     [0,0,0,0],
-#     [0,1,4,0],
-#     [0,0,0,0]   
-# ])
-# base(A, B, 3)
-# print('--------------------')
-# working(A, B, 3)
-# print('--------------------')
-# zero(A, B, 3)
-# print('--------------------')
-# dynamic(A, B, 3)
-
-rows = 375
-cols = 450
-w = 5
-img1 = rgb2gray(plt.imread("data/img2.png"))[: rows, : cols]
-img2 = rgb2gray(plt.imread("data/img6.png"))[: rows, : cols]
-dynamic(img1, img2, w)
+    imsaveWrapper(depth, f'../images/{name}/depth')
 
 
-# print("Img shape:", img1.shape, "Window:", w)
-# print("Two for loops time: ", end='', flush=True)
-# start = time.time()
-# two(img1, img2, w)
-# print(time.time() - start)
+names = ['art', 'books', 'computer', 'dolls', 'drumsticks', 'dwarves', 'laundry', 'moebius', 'reindeer']
 
-# print("One for loops time: ", end='', flush=True)
-# start = time.time()
-# one(img1, img2, w)
-# print(time.time() - start)
+for name in names[-1:]:
+    w = 15
+    img1 = rgb2gray(plt.imread(f"../images/{name}/left.png"))
+    img2 = rgb2gray(plt.imread(f"../images/{name}/right.png"))
+    assert(img1.shape == img2.shape)
+    dynamic(img1, img2, w)
 
-# print("Zero for loops time: ", end='', flush=True)
-# start = time.time()
-# zero(img1, img2, w)
-# print(time.time() - start)
+# imsaveWrapper(rgb2gray(plt.imread('results/depth2.png')) / 4, 'divide')
+# imsaveWrapper(gaussian(rgb2gray(plt.imread('results/depth2.png')) ** 1, 2), 'gamma')
+
+# img1 = rgb2gray(plt.imread("results/depth2.png"))
+# imsaveWrapper(np.clip(img1 - sobel(img1), 0, 1), 'laplacian')
+
+# import cv2
+# filtered = cv2.bilateralFilter(img1, d=9, sigmaColor=25, sigmaSpace=25)
+# imsaveWrapper(filtered, 'filter')
+
