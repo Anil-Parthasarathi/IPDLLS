@@ -278,11 +278,6 @@ async function main() {
     //need to do this to prevent textures from being upside down!
     glContext.pixelStorei(glContext.UNPACK_FLIP_Y_WEBGL, true);
 
-    const textureAssets = [
-        'assets/disparityFace.png',
-        'assets/face.png',
-    ];
-
     const textures = await Promise.all(textureAssets.map(textureLoader));
 
     for (var i = 0; i < textures.length; i++) {
@@ -426,6 +421,24 @@ export function handleDepthFactorChange(newDepthFactor) {
 
 }
 window.handleDepthFactorChange = handleDepthFactorChange;
+
+window.updateTexture = async function updateTexture(image, depth) {
+    const textures = await Promise.all([image,depth].map(textureLoader));
+
+    for (var i = 0; i < textures.length; i++) {
+        glContext.activeTexture(glContext.TEXTURE0 + i);
+        glContext.bindTexture(glContext.TEXTURE_2D, textures[i]);
+    }
+
+    //setup texture attributes
+    //right now just passing in normal and image but later we can get this setup for multiple passes
+
+    const iChannel0Loc = glContext.getUniformLocation(glProgram, "depth");
+    glContext.uniform1i(iChannel0Loc, 0);
+
+    const iChannel1Loc = glContext.getUniformLocation(glProgram, "image");
+    glContext.uniform1i(iChannel1Loc, 1);
+}
 
 
 main();
