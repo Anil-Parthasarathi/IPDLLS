@@ -278,6 +278,12 @@ async function main() {
     //need to do this to prevent textures from being upside down!
     glContext.pixelStorei(glContext.UNPACK_FLIP_Y_WEBGL, true);
 
+    const textureAssets = [
+        'assets/disparityFace.png',
+        'assets/face.png',
+    ];
+
+
     const textures = await Promise.all(textureAssets.map(textureLoader));
 
     for (var i = 0; i < textures.length; i++) {
