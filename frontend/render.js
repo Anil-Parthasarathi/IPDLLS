@@ -279,8 +279,8 @@ async function main() {
     glContext.pixelStorei(glContext.UNPACK_FLIP_Y_WEBGL, true);
 
     const textureAssets = [
-        'assets/disparitySculpt.png',
-        'assets/sculpt.png',
+        'assets/disparityFace.png',
+        'assets/face.png',
     ];
 
     const textures = await Promise.all(textureAssets.map(textureLoader));
