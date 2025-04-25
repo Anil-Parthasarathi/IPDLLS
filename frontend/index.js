@@ -32,13 +32,11 @@ function addImages() {
   imageContainer.firstChild.firstChild.checked = true;
   imageContainer.addEventListener('change', (event) => {
     if (event.target && event.target.type === 'radio') {
-      console.log(event.target.id);
       selectImage(event.target.id);
     }
   });
 
   selectImage(imageDirs[0]);
-  getDisparity();
 }
 
 document.body.onload = addImages();
@@ -51,7 +49,7 @@ function selectImage(imageDir) {
   rightImage.src = `../images/${imageDir}/right.png`;
 }
 
-async function getDisparity() {
+window.getDisparity = async function getDisparity() {
   const selected = document.querySelector('input[name="images"]:checked');
   if (!selected) {
     return;
