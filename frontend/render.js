@@ -139,7 +139,7 @@ void main() {
         }
     }
 
-    vec3 norm = normalize(vec3(-1.0 * gradX, -1.0 * gradY, zFactor)); //adjust z value here to change depth effect, this is what I thought looked best but might want to experiment more
+    vec3 norm = normalize(vec3(1.0 * gradX, 1.0 * gradY, zFactor)); //adjust z value here to change depth effect, this is what I thought looked best but might want to experiment more
 
     /////////////////////////////////////////////////////////////
 
