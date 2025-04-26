@@ -229,7 +229,7 @@ var renderStyle = 0;
 var renderStyleAttribute;
 
 var depthFactor = 598400.0;
-var zFactor = 0.15;
+var zFactor = 1.0;
 var zFactorAttribute;
 var depthFactorAttribute;
 

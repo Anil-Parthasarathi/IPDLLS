@@ -1,5 +1,6 @@
 function addImages() {
   const imageDirs = [
+    'reindeer',
     'art',
     'books',
     'computer',
@@ -8,7 +9,6 @@ function addImages() {
     'dwarves',
     'laundry',
     'moebius',
-    'reindeer',
   ];
 
   const imageContainer = document.getElementsByTagName('fieldset')[0];
