@@ -12,6 +12,7 @@ const finalFragmentShaderCode = `
 precision mediump float;
 
 uniform int renderStyle;
+uniform int NIGHTMODE;
 uniform float zFactor;
 
 uniform float DEPTHFACTOR;
@@ -19,7 +20,7 @@ uniform float DEPTHFACTOR;
 uniform vec3 iResolution;
 uniform vec4 iMouse;
 
-uniform sampler2D depth;
+uniform sampler2D depth; //note: this is actually disparity, we were testing with AI generated depth maps at first but I don't want to accidentally mess up anything by changing the variable name
 uniform sampler2D image;
 
 /*mat3 sobelFilterX = mat3(
@@ -49,8 +50,15 @@ void main() {
     vec3 specular = vec3(1.0, 1.0, 0.9);
     vec3 ambient = vec3(0.10, 0.10, 0.60);
     vec3 diffuse = vec3(1.00, 0.80, 0.50);
+
+    if (NIGHTMODE == 1){
+        ambient = (0.1 * ambient) / 1.1;
+    }
+    else{
+        ambient = (0.1 * ambient + originalImage.xyz) / 1.1;
+    }
     
-    ambient = (0.1 * ambient + originalImage.xyz) / 1.1;
+    
     diffuse = 0.8 * (0.1 * diffuse + originalImage.xyz) / 1.1; // added 0.8 in front to dim the color of the image so that effects of light are more pronounced
 
     vec3 lightpos = vec3(iMouse.x, iMouse.y, 70.0); //adjust this to change the size, closeness, of light
@@ -228,6 +236,9 @@ var iMouseAttribute;
 var renderStyle = 0;
 var renderStyleAttribute;
 
+var NIGHTMODE = 0;
+var NIGHTMODEAttribute = 0;
+
 var depthFactor = 598400.0;
 var zFactor = 1.0;
 var zFactorAttribute;
@@ -306,6 +317,7 @@ async function main() {
     iResolutionAttribute = glContext.getUniformLocation(glProgram, 'iResolution');
 
     renderStyleAttribute = glContext.getUniformLocation(glProgram, 'renderStyle');
+    NIGHTMODEAttribute = glContext.getUniformLocation(glProgram, 'NIGHTMODE');
     depthFactorAttribute = glContext.getUniformLocation(glProgram, 'DEPTHFACTOR');
     zFactorAttribute = glContext.getUniformLocation(glProgram, 'zFactor');
 
@@ -340,6 +352,7 @@ function render(){
     glContext.uniform3f(iResolutionAttribute, canv.width, canv.height, 1.0);
 
     glContext.uniform1i(renderStyleAttribute, renderStyle);
+    glContext.uniform1i(NIGHTMODEAttribute, NIGHTMODE);
     glContext.uniform1f(zFactorAttribute, zFactor);
     glContext.uniform1f(depthFactorAttribute, depthFactor);
 
@@ -407,6 +420,13 @@ export function handleDepthFactorChange(newDepthFactor) {
 
 }
 window.handleDepthFactorChange = handleDepthFactorChange;
+
+export function toggleNightMode() {
+    
+    NIGHTMODE = (NIGHTMODE + 1) % 2;
+
+}
+window.toggleNightMode = toggleNightMode;
 
 window.updateTexture = async function updateTexture(image, depth) {
     const textures = await Promise.all([image,depth].map(textureLoader));

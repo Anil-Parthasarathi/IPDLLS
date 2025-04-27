@@ -175,6 +175,13 @@
           Cel Shader
         </label>
       </div>
+      <label class="switch">
+        <input type="checkbox"
+        onclick="toggleNightMode()"
+        >
+        <span class="slider round"></span>
+        Night Mode
+      </label>
       <div class = "sliders"></div>
         <div>
           <label for="zSlider">"Z Factor":</label>
@@ -207,7 +214,7 @@
       </div>
     </div>
     <div class="canvas-container">
-      <canvas id="renderCanvas" width="950" height="700"></canvas>
+      <canvas id="renderCanvas" width="463" height="370"></canvas>
     </div>
     <form id="image-selection" type="radio" onsubmit="return false">
       <fieldset></fieldset>
