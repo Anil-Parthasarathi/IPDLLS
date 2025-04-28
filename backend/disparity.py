@@ -282,6 +282,13 @@ for name in names[-1:]:
     assert(img1.shape == img2.shape)
     dynamic(img1, img2, w)
 
+'''
+
+for name in names:
+    img2 = gaussianWrapper(f"../images/{name}/depth", 0.6);
+
+'''
+
 # imsaveWrapper(rgb2gray(plt.imread('results/depth2.png')) / 4, 'divide')
 # imsaveWrapper(gaussian(rgb2gray(plt.imread('results/depth2.png')) ** 1, 2), 'gamma')
 
