@@ -8,15 +8,19 @@ const vertexShaderCode = `
 `;
 
 const finalFragmentShaderCode = `
+
 precision mediump float;
 
 uniform int renderStyle;
+uniform int NIGHTMODE;
 uniform float zFactor;
+
+uniform float DEPTHFACTOR;
 
 uniform vec3 iResolution;
 uniform vec4 iMouse;
 
-uniform sampler2D depth;
+uniform sampler2D depth; //note: this is actually disparity, we were testing with AI generated depth maps at first but I don't want to accidentally mess up anything by changing the variable name
 uniform sampler2D image;
 
 /*mat3 sobelFilterX = mat3(
@@ -35,19 +39,26 @@ void main() {
 
     vec2 uv = gl_FragCoord.xy / iResolution.xy; // Normalized pixel coordinates
 
-    vec4 depthMap = texture2D(depth, uv);
+    vec4 disparityMap = texture2D(depth, uv);
     vec4 originalImage = texture2D(image, uv);
 
     if (renderStyle == 4){
-        gl_FragColor = depthMap;
+        gl_FragColor = disparityMap;
         return;
     }
 
     vec3 specular = vec3(1.0, 1.0, 0.9);
     vec3 ambient = vec3(0.10, 0.10, 0.60);
     vec3 diffuse = vec3(1.00, 0.80, 0.50);
+
+    if (NIGHTMODE == 1){
+        ambient = (0.1 * ambient) / 1.1;
+    }
+    else{
+        ambient = (0.1 * ambient + originalImage.xyz) / 1.1;
+    }
     
-    ambient = (0.1 * ambient + originalImage.xyz) / 1.1;
+    
     diffuse = 0.8 * (0.1 * diffuse + originalImage.xyz) / 1.1; // added 0.8 in front to dim the color of the image so that effects of light are more pronounced
 
     vec3 lightpos = vec3(iMouse.x, iMouse.y, 70.0); //adjust this to change the size, closeness, of light
@@ -70,7 +81,7 @@ void main() {
 
         vec2 neighborFragment = vec2(uv.x - texel.x, uv.y);
 
-        gradX += -2.0 * texture2D(depth,  neighborFragment).r;
+        gradX += -2.0 * (DEPTHFACTOR / max(texture2D(depth,  neighborFragment).r, 0.0001));
         
     }
 
@@ -78,7 +89,7 @@ void main() {
 
         vec2 neighborFragment = vec2(uv.x + texel.x, uv.y);
 
-        gradX += 2.0 * texture2D(depth,  neighborFragment).r;
+        gradX += 2.0 * (DEPTHFACTOR / max(texture2D(depth,  neighborFragment).r, 0.0001));
 
     }
 
@@ -86,7 +97,7 @@ void main() {
 
         vec2 neighborFragment = vec2(uv.x, uv.y - texel.y);
 
-        gradY += -2.0 * texture2D(depth,  neighborFragment).r;
+        gradY += -2.0 * (DEPTHFACTOR / max(texture2D(depth,  neighborFragment).r, 0.0001));
 
         if (uv.x > 0.0){
 
@@ -113,7 +124,7 @@ void main() {
 
         vec2 neighborFragment = vec2(uv.x, uv.y + texel.y);
 
-        gradY += 2.0 * texture2D(depth, neighborFragment).r;
+        gradY += 2.0 * (DEPTHFACTOR / max(texture2D(depth,  neighborFragment).r, 0.0001));
 
         if (uv.x > 0.0){
 
@@ -136,7 +147,7 @@ void main() {
         }
     }
 
-    vec3 norm = normalize(vec3(-1.0 * gradX, -1.0 * gradY, zFactor)); //adjust z value here to change depth effect, this is what I thought looked best but might want to experiment more
+    vec3 norm = normalize(vec3(1.0 * gradX, 1.0 * gradY, zFactor)); //adjust z value here to change depth effect, this is what I thought looked best but might want to experiment more
 
     /////////////////////////////////////////////////////////////
 
@@ -225,8 +236,13 @@ var iMouseAttribute;
 var renderStyle = 0;
 var renderStyleAttribute;
 
-var zFactor = 0.15;
+var NIGHTMODE = 0;
+var NIGHTMODEAttribute = 0;
+
+var depthFactor = 598400.0;
+var zFactor = 1.0;
 var zFactorAttribute;
+var depthFactorAttribute;
 
 async function main() {
 
@@ -273,21 +289,7 @@ async function main() {
     //need to do this to prevent textures from being upside down!
     glContext.pixelStorei(glContext.UNPACK_FLIP_Y_WEBGL, true);
 
-    const textures = await Promise.all(textureAssets.map(textureLoader));
-
-    for (var i = 0; i < textures.length; i++) {
-        glContext.activeTexture(glContext.TEXTURE0 + i);
-        glContext.bindTexture(glContext.TEXTURE_2D, textures[i]);
-    }
-
-    //setup texture attributes
-    //right now just passing in normal and image but later we can get this setup for multiple passes
-
-    const iChannel0Loc = glContext.getUniformLocation(glProgram, "depth");
-    glContext.uniform1i(iChannel0Loc, 0);
-
-    const iChannel1Loc = glContext.getUniformLocation(glProgram, "image");
-    glContext.uniform1i(iChannel1Loc, 1);
+    window.getDisparity();
 
     //set up a rectangle to use as a frame to render with
     const verts = new Float32Array([
@@ -315,6 +317,8 @@ async function main() {
     iResolutionAttribute = glContext.getUniformLocation(glProgram, 'iResolution');
 
     renderStyleAttribute = glContext.getUniformLocation(glProgram, 'renderStyle');
+    NIGHTMODEAttribute = glContext.getUniformLocation(glProgram, 'NIGHTMODE');
+    depthFactorAttribute = glContext.getUniformLocation(glProgram, 'DEPTHFACTOR');
     zFactorAttribute = glContext.getUniformLocation(glProgram, 'zFactor');
 
     //set up the mouse and an event listener for it
@@ -348,7 +352,9 @@ function render(){
     glContext.uniform3f(iResolutionAttribute, canv.width, canv.height, 1.0);
 
     glContext.uniform1i(renderStyleAttribute, renderStyle);
+    glContext.uniform1i(NIGHTMODEAttribute, NIGHTMODE);
     glContext.uniform1f(zFactorAttribute, zFactor);
+    glContext.uniform1f(depthFactorAttribute, depthFactor);
 
     //draw!
     glContext.drawArrays(glContext.TRIANGLES, 0, 6);
@@ -406,6 +412,21 @@ export function handleZSliderChange(newZFactor) {
 
 }
 window.handleZSliderChange = handleZSliderChange;
+
+export function handleDepthFactorChange(newDepthFactor) {
+    document.getElementById("depthSlider").textContent = newDepthFactor;
+    
+    depthFactor = newDepthFactor;
+
+}
+window.handleDepthFactorChange = handleDepthFactorChange;
+
+export function toggleNightMode() {
+    
+    NIGHTMODE = (NIGHTMODE + 1) % 2;
+
+}
+window.toggleNightMode = toggleNightMode;
 
 window.updateTexture = async function updateTexture(image, depth) {
     const textures = await Promise.all([image,depth].map(textureLoader));

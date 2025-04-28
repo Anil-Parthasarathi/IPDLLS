@@ -8,7 +8,86 @@
     <script src="./render.js" type="module"></script>
     <style>
       body {
+        background-color: rgb(13, 8, 1);
         padding-bottom: 20px;
+      }
+
+      h1{
+        color: whitesmoke;
+        text-align: center;
+      }
+
+      h2{
+        color: yellow;
+        text-align: center;
+      }
+
+      h3{
+        color: white;
+        text-align: center;
+      }
+      
+      span{
+        color: white;
+      }
+
+      p{
+        color: white;
+      }
+
+      label{
+        color: cyan;
+      }
+
+      input[type='radio'] {
+        accent-color: yellow;
+      }
+
+      input[type="range"] {
+        -webkit-appearance: none;
+        background: white;
+        height: 6px;
+      }
+
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 16px;
+        width: 16px;
+        background: yellow;
+        border-radius: 50%;
+        cursor: pointer;
+      }
+
+      input[type="range"]::-moz-range-thumb {
+        height: 16px;
+        background: yellow;
+        border-radius: 50%;
+        cursor: pointer;
+      }
+
+      .controls {
+        display: flex;
+        justify-content: space-evenly;
+        padding: 20px 40px;
+        gap: 40px;
+      }
+
+      .sliders {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .radioButtons {
+        display: flex;
+        flex-direction: row;
+        gap: 5px;
+      }
+
+      .canvas-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
       }
 
       form#image-selection {
@@ -47,68 +126,96 @@
     <h1>CSCE 748 Computational Photography FINAL PROJECT</h1>
     <h2 bold>~In placid depth, latent light sparkles~</h2>
     <h3>By Andres Santiago, Anil Parthasarathi, and Gage Mariano</h3>
-    <div>
-      <label>
-        <input
-          type="radio"
-          name="renderStyle"
-          value="0"
-          onclick="setRenderStyle('0')"
-        />
-        Default
+    <div class="controls">
+      <div class = "radioButtons">
+        <label>
+          <input
+            type="radio"
+            name="renderStyle"
+            value="0"
+            onclick="setRenderStyle('0')"
+            checked
+          />
+          Default
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="renderStyle"
+            value="4"
+            onclick="setRenderStyle('4')"
+          />
+          Disparity Map
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="renderStyle"
+            value="1"
+            onclick="setRenderStyle('1')"
+          />
+          Normal Map
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="renderStyle"
+            value="2"
+            onclick="setRenderStyle('2')"
+          />
+          Silhouette Shader
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="renderStyle"
+            value="3"
+            onclick="setRenderStyle('3')"
+          />
+          Cel Shader
+        </label>
+      </div>
+      <label class="switch">
+        <input type="checkbox"
+        onclick="toggleNightMode()"
+        >
+        <span class="slider round"></span>
+        Night Mode
       </label>
-      <label>
-        <input
-          type="radio"
-          name="renderStyle"
-          value="4"
-          onclick="setRenderStyle('4')"
-        />
-        Depth Map
-      </label>
-      <label>
-        <input
-          type="radio"
-          name="renderStyle"
-          value="1"
-          onclick="setRenderStyle('1')"
-        />
-        Normal Map
-      </label>
-      <label>
-        <input
-          type="radio"
-          name="renderStyle"
-          value="2"
-          onclick="setRenderStyle('2')"
-        />
-        Silhouette Shader
-      </label>
-      <label>
-        <input
-          type="radio"
-          name="renderStyle"
-          value="3"
-          onclick="setRenderStyle('3')"
-        />
-        Cel Shader
-      </label>
+      <div class = "sliders"></div>
+        <div>
+          <label for="zSlider">"Z Factor":</label>
+          <input
+            type="range"
+            id="zSlider"
+            name="zSlider"
+            min="0.0"
+            max="1.0"
+            step="0.01"
+            value="1.0"
+            oninput="handleZSliderChange(this.value)"
+          />
+          <span id="sliderValue">1.0</span>
+        </div>
+        <div>
+          <label for="depthSlider">"Depth Factor":</label>
+          <input
+            type="range"
+            id="sliderD"
+            name="sliderD"
+            min="1.0"
+            max="1000000.0"
+            step="5.0"
+            value="598400.0"
+            oninput="handleDepthFactorChange(this.value)"
+          />
+          <span id="depthSlider">598400.0</span>
+        </div>
+      </div>
     </div>
-    <div>
-      <label for="zSlider">"Z Factor":</label>
-      <input
-        type="range"
-        id="zSlider"
-        name="zSlider"
-        min="0.0"
-        max="1.0"
-        step="0.01"
-        value="0.15"
-        oninput="handleZSliderChange(this.value)"
-      />
-      <span id="sliderValue">0.15</span>
+    <div class="canvas-container">
+      <canvas id="renderCanvas" width="463" height="370"></canvas>
     </div>
-    <canvas id="renderCanvas" width="950" height="700"></canvas>
     <form id="image-selection" type="radio" onsubmit="return false">
       <fieldset></fieldset>
       <div id="selected-images">
