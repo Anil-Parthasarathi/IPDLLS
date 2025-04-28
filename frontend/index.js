@@ -1,5 +1,6 @@
+// Adds inputs and image containers for selection of image pairs
 function addImages() {
-  const imageDirs = [
+  const imageNames = [
     'reindeer',
     'art',
     'books',
@@ -13,15 +14,15 @@ function addImages() {
 
   const imageContainer = document.getElementsByTagName('fieldset')[0];
 
-  imageDirs.forEach((imageDir) => {
+  imageNames.forEach((imageName) => {
     const imageInput = document.createElement('input');
     imageInput.type = 'radio';
-    imageInput.id = imageDir;
+    imageInput.id = imageName;
     imageInput.name = 'images';
 
     const imageLabel = document.createElement('label');
-    imageLabel.htmlFor = imageDir;
-    imageLabel.innerText = imageDir[0].toUpperCase() + imageDir.slice(1);
+    imageLabel.htmlFor = imageName;
+    imageLabel.innerText = imageName[0].toUpperCase() + imageName.slice(1);
 
     const imageDiv = document.createElement('div');
     imageDiv.append(imageInput, imageLabel);
@@ -30,39 +31,43 @@ function addImages() {
   });
 
   imageContainer.firstChild.firstChild.checked = true;
+
+  // Create callback to change displayed image pair
   imageContainer.addEventListener('change', (event) => {
     if (event.target && event.target.type === 'radio') {
       selectImage(event.target.id);
     }
   });
 
-  selectImage(imageDirs[0]);
+  selectImage(imageNames[0]);
 }
 
 document.body.onload = addImages();
 
-function selectImage(imageDir) {
+// Displays selected image pair
+function selectImage(imageName) {
   const leftImage = document.getElementById('selected-left');
   const rightImage = document.getElementById('selected-right');
 
-  leftImage.src = `../images/${imageDir}/left.png`;
-  rightImage.src = `../images/${imageDir}/right.png`;
+  leftImage.src = `../images/${imageName}/left.png`;
+  rightImage.src = `../images/${imageName}/right.png`;
 }
 
+// Updates canvas with selected image pair and disparity map
 window.getDisparity = async function getDisparity() {
   const selected = document.querySelector('input[name="images"]:checked');
   if (!selected) {
     return;
   }
   
-  const imageDir = selected.id;
+  const imageName = selected.id;
 
   textureAssets = [
-    `../images/${imageDir}/depth.png`,
-    `../images/${imageDir}/left.png`,
+    `../images/${imageName}/depth.png`,
+    `../images/${imageName}/left.png`,
   ]
 
-  window.updateTexture(`../images/${imageDir}/depth.png`, `../images/${imageDir}/left.png`)
+  window.updateTexture(`../images/${imageName}/depth.png`, `../images/${imageName}/left.png`)
 }
 
 const form = document.getElementsByTagName('form')[0];
