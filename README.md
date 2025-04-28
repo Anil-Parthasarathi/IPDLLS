@@ -1,12 +1,15 @@
-In placid depth, latent light sparkles
+# In placid depth, latent light sparkles
+**CSCE 748 Final Project**\
+*By Andres Santiago, Anil Parthasarathi, and Gage Mariano*
 
-Stack:  
--Python: backend (matplotlib, numpy, fastapi)   
--webgl: Final rendering  
+## Stack:  
+- Python: Matplotlib, Numpy
+- WebGL: Final rendering
 
-Building:  
-pip install fastapi
-pip install fastapi[standard]
+## Use
+[Deployment](https://ipdlls.netlify.app/frontend/)
 
-fastapi dev main.py
-
+To generate disparity map, run the following
+```
+python3 disparity/main.py "path to left.png/right.png directory" "window size"
+```
