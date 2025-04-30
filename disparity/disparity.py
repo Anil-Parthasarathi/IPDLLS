@@ -2,7 +2,8 @@ from tkinter import E
 import numpy as np
 from matplotlib import pyplot as plt
 import time
-from skimage.filters import gaussian, sobel
+from skimage.filters import gaussian
+from skimage.transform import resize
 
 
 def imsaveWrapper(img, name):
@@ -11,6 +12,19 @@ def imsaveWrapper(img, name):
         plt.imsave(f'{name}.png', np.stack((temp, temp, temp), axis=2))
     else:
         plt.imsave(f'{name}.png', temp)
+
+def resizeWrapper(path, factor):
+    img = plt.imread(path + '.png')
+    HEIGHT, WIDTH, _ = img.shape
+
+    R = resize(img[:, :, 0], (np.ceil(HEIGHT * factor), np.ceil(WIDTH * factor)), anti_aliasing=False)
+    R = resize(R, (HEIGHT, WIDTH), anti_aliasing=False)
+    G = resize(img[:, :, 1], (np.ceil(HEIGHT * factor), np.ceil(WIDTH * factor)), anti_aliasing=False)
+    G = resize(G, (HEIGHT, WIDTH), anti_aliasing=False)
+    B = resize(img[:, :, 2], (np.ceil(HEIGHT * factor), np.ceil(WIDTH * factor)), anti_aliasing=False)
+    B = resize(B, (HEIGHT, WIDTH), anti_aliasing=False)
+
+    return np.stack((R, G, B), axis=2)
 
 def gaussianWrapper(path, sigma):
     img = rgb2gray(plt.imread(path + '.png'))
@@ -25,39 +39,13 @@ def SSD(x, y, axes):
     return np.sum((x - y) ** 2, axis=axes)
 
 def NCC(x, y, axes):
-    # for i in range(5):
-    #     tempx = np.copy(x[i, 0])
-    #     tempy = np.copy(y[i])
-    #     # print(tempx)
-    #     mean_x = np.mean(tempx)#), axis=axes)
-    #     mean_y = np.mean(tempy)
-    #     # print(mean_x)
-    #     # print(mean_x)
-
-    #     sigma_x = np.std(tempx)#, axis=axes)
-    #     sigma_y = np.std(tempy)
-    #     # print(sigma_x)
-
-    #     val = np.sum((tempx - mean_x) * (tempy - mean_y)) / (sigma_x * sigma_y * tempx.size) 
-    #     # print(val)
-        # if (abs(val) > 1):
-        #     break
-
-
     mean_x = np.mean(x, axis=axes)
     mean_y = np.mean(y, axis=(axes[0] - 1, axes[1] - 1))
-    # print(mean_x[:5])
-    # print(mean_x.shape, mean_y.shape)
 
     sigma_x = np.std(x, axis=axes)
     sigma_y = np.std(y, axis=(axes[0] - 1, axes[1] - 1))
-    # print(sigma_x[:5])
-    # print(sigma_x.shape, sigma_y.shape)
-    # exit(-1)
 
     return np.sum((x - mean_x[:, :, np.newaxis, np.newaxis]) * (y - mean_y[:, np.newaxis, np.newaxis]), axis = axes) / (sigma_x * sigma_y) / (x.shape[-2] * x.shape[-1])
-    # print(temp.shape)
-    # exit(0)
 
 # Inputs must be grayscale (and same size)
 # Window must be odd dimensions
@@ -156,11 +144,6 @@ def dynamic(img1, img2, windowDim):
 
         # Format dynamic programming matrix
         dr = (0, min(63, WIDTH - 1)) # inclusive
-        # diagIndices = np.add.outer(-np.arange(WIDTH), np.arange(WIDTH)) 
-        # diagIndices = np.add.outer(-np.arange(WIDTH + (dr[1] - dr[0])), np.arange(WIDTH + (dr[1] - dr[0]))) 
-        # diagIndices = ((diagIndices >= dr[0]) & (diagIndices <= dr[1]))[:DSI.shape[0]]
-        # DSI = np.concatenate((DSI, np.zeros((DSI.shape[0], dr[1] - dr[0]))), axis=1)[diagIndices]
-        # DSI = DSI.reshape(WIDTH, dr[1] - dr[0] + 1).T
 
         # Fill in matrix column by column
         occlusionConstant = 0.5
@@ -228,47 +211,7 @@ def dynamic(img1, img2, windowDim):
     for col in range(WIDTH - 2, -1, -1):
         prev = depth[:, col + 1]
         curr = depth[:, col]
-
         curr[rightOccluded[:, col]] = np.maximum(prev[rightOccluded[:, col]], curr[rightOccluded[:, col]])
-
-        # # Initial row and col
-        # for i in range(DSI.shape[0]):
-        #     DSI[i, 0] = i * occlusionConstant
-
-        # for i in range(DSI.shape[1]):
-        #     DSI[0, i] = i * occlusionConstant
-
-        # # Remaining columns
-        # for row in range(1, DSI.shape[0]):
-        #     for col in range(1, DSI.shape[1]):
-
-        #         dissimilarity = DSI[row - 1, col - 1] + DSI[row, col]
-        #         occlusionLeft =  DSI[row - 1, col] + occlusionConstant
-        #         occlusionRight = DSI[row, col - 1] + occlusionConstant
-
-        #         DSI[row][col] = min(dissimilarity, occlusionLeft, occlusionRight) 
-
-        # # Work backwards
-        # row = DSI.shape[0] - 1
-        # col = DSI.shape[1] - 1
-        # while (row != 0 and col != 0):
-
-        #     dissimilarity = DSI[row - 1, col - 1]
-        #     occlusionLeft = DSI[row - 1, col]
-        #     occlusionRight = DSI[row, col - 1]
-                    
-        #     currMin = min(dissimilarity, occlusionLeft, occlusionRight)
-
-        #     if (currMin == dissimilarity): # Not necessary unless there is a tie (included to avoid unnecessary occlussion)
-        #         depth[outerRow, col] = row
-        #         row -= 1
-        #         col -= 1
-        #     elif (currMin == occlusionLeft):
-        #         row -= 1
-        #     elif (currMin == occlusionRight):
-        #         col -= 1
-
-        # depth[outerRow, 0] = row
         
     imsaveWrapper(depth, f'../images/{name}/depth')
 
@@ -289,13 +232,4 @@ for name in names:
 
 '''
 
-# imsaveWrapper(rgb2gray(plt.imread('results/depth2.png')) / 4, 'divide')
-# imsaveWrapper(gaussian(rgb2gray(plt.imread('results/depth2.png')) ** 1, 2), 'gamma')
-
-# img1 = rgb2gray(plt.imread("results/depth2.png"))
-# imsaveWrapper(np.clip(img1 - sobel(img1), 0, 1), 'laplacian')
-
-# import cv2
-# filtered = cv2.bilateralFilter(img1, d=9, sigmaColor=25, sigmaSpace=25)
-# imsaveWrapper(filtered, 'filter')
 
