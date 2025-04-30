@@ -10,7 +10,6 @@ function addImages() {
     'dwarves',
     'laundry',
     'moebius',
-    'pots'
   ];
 
   const imageContainer = document.getElementsByTagName('fieldset')[0];
