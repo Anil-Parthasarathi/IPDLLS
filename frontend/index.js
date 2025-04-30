@@ -10,6 +10,12 @@ function addImages() {
     'dwarves',
     'laundry',
     'moebius',
+    'cloth',
+    'aloe',
+    'bowling',
+    'plastic',
+    'monopoly',
+    'pots',
   ];
 
   const imageContainer = document.getElementsByTagName('fieldset')[0];
@@ -59,16 +65,19 @@ window.getDisparity = async function getDisparity() {
   if (!selected) {
     return;
   }
-  
+
   const imageName = selected.id;
 
   textureAssets = [
     `../images/${imageName}/depth.png`,
     `../images/${imageName}/left.png`,
-  ]
+  ];
 
-  window.updateTexture(`../images/${imageName}/depth.png`, `../images/${imageName}/left.png`)
-}
+  window.updateTexture(
+    `../images/${imageName}/depth.png`,
+    `../images/${imageName}/left.png`
+  );
+};
 
 const form = document.getElementsByTagName('form')[0];
 form.addEventListener('submit', () => getDisparity());

@@ -24,8 +24,6 @@ def NCC(x, y, axes):
 
     return np.sum((x - mean_x[:, :, np.newaxis, np.newaxis]) * (y - mean_y[:, np.newaxis, np.newaxis]), axis = axes) / (sigma_x * sigma_y) / (x.shape[-2] * x.shape[-1])
 
-
-
 def dynamic(img1, img2, windowDim):
     HEIGHT = img1.shape[0]
     WIDTH = img1.shape[1]
@@ -118,17 +116,17 @@ def dynamic(img1, img2, windowDim):
     for col in range(WIDTH - 2, -1, -1):
         prev = depth[:, col + 1]
         curr = depth[:, col]
-
         curr[rightOccluded[:, col]] = np.maximum(prev[rightOccluded[:, col]], curr[rightOccluded[:, col]])
         
     return depth
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     if len(sys.argv) < 3:
         print("Must enter path to directory containing left.png and right.png and window size")
         exit(1)
 
-    img1 = rgb2gray(plt.imread(os.path.join(sys.argv[1], 'left.png')))
-    img2 = rgb2gray(plt.imread(os.path.join(sys.argv[1], 'right.png')))
+    img1 = rgb2gray(plt.imread(os.path.join(sys.argv[1], "left.png")))
+    img2 = rgb2gray(plt.imread(os.path.join(sys.argv[1], "right.png")))
 
-    imsaveWrapper(dynamic(img1, img2, int(sys.argv[2])), os.path.join(sys.argv[1], 'depth'))
+    imsaveWrapper(dynamic(img1, img2, int(sys.argv[2])), os.path.join(sys.argv[1], "depth"))
