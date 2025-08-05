@@ -3,10 +3,10 @@
 *By Andres Santiago, Anil Parthasarathi, and Gage Mariano*
 
 ## Stack:  
-- Python: Matplotlib, Numpy
-- WebGL: Final rendering
+- Python: Matplotlib, Numpy; disparity map creation
+- WebGL: Final rendering, normal map creation
 
-To generate disparity map, run the following
+To generate the disparity map, run the following:
 ```
 python3 disparity/main.py "path to left.png/right.png directory" "window size"
 ```
@@ -20,4 +20,4 @@ python3 disparity/main.py "path to left.png/right.png directory" "window size"
 <img width="1190" height="878" alt="image" src="https://github.com/user-attachments/assets/097be1c2-4d96-454b-9299-3008bd9614ac" />
 
 
-- To see more and learn more about how our implementation process, please check out our report pdf!
+- To see more and learn more about our implementation process, please check out our report pdf!
