@@ -13,6 +13,8 @@ python3 disparity/main.py "path to left.png/right.png directory" "window size"
 
 ## Results:
 
+Demo Video: https://www.youtube.com/watch?v=_lRqbRReFZc&ab_channel=AndresSantiago
+
 <img width="2092" height="1476" alt="image" src="https://github.com/user-attachments/assets/a24add28-a12a-43af-a77d-a6231e642fba" />
 
 <img width="1078" height="792" alt="image" src="https://github.com/user-attachments/assets/ff43cd3a-488c-48e2-a623-43bfe1800d73" />
